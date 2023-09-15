@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
+      - 'LICENSE*'
+  push:
+    branches:
+      - main
+      - test-*
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
+      - 'LICENSE*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    env:
+      OPENSSL_VERSION: "3.1.1"
+      MIX_ENV: prod
+
+    strategy:
+      matrix:
+        arch: [x86_64, i686, aarch64, ppc64le, s390x]
+
+    name: manylinux2014_${{ matrix.arch }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: pull docker
+        run: |
+          sudo docker pull quay.io/pypa/manylinux2014_${{ matrix.arch }}:latest
+
+      - name: Precompile
+        run: |
+          cp .github/script-to-build-manylinux2014.sh ./
+          cp .github/do-build-manylinux2014.sh ./
+
+          bash ./script-to-build-manylinux2014.sh "${{ env.OPENSSL_VERSION }}" "${{ matrix.arch }}"
