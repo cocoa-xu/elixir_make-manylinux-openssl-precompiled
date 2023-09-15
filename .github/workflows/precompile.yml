@@ -27,6 +27,10 @@ jobs:
       - name: pull docker
         run: |
           sudo docker pull quay.io/pypa/manylinux2014_${{ matrix.arch }}:latest
+    
+      - name: Install binfmt
+        run: |
+          sudo apt install -y binfmt-support qemu-user-static
 
       - name: Precompile
         run: |
